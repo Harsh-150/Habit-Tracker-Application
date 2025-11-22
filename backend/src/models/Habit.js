@@ -8,13 +8,11 @@ const habitSchema = new mongoose.Schema({
     },
     name: { type: String, required: true },
     streak: { type: Number, default: 0 },
-    
-    // --- NEW FIELDS ---
-    target: { type: Number, default: 1 },        // e.g., 8 (for water)
-    dailyProgress: { type: Number, default: 0 }, // e.g., 3 (so far)
-    // ------------------
 
-    lastCompleted: { type: String, default: null } // YYYY-MM-DD
+    target: { type: Number, default: 1 },   
+    dailyProgress: { type: Number, default: 0 },
+
+    lastCompleted: { type: String, default: null } 
 });
 
 module.exports = mongoose.model('Habit', habitSchema);
