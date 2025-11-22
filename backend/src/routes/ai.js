@@ -2,9 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const OpenAI = require('openai'); 
-require('dotenv').config();
 
-// Initialize OpenAI
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
@@ -35,19 +33,15 @@ router.post('/suggest-habits', async (req, res) => {
             temperature: 0.7,
         });
 
-        // Extract the text content
         const content = completion.choices[0].message.content;
         
-        // Parse the JSON string into a JavaScript object
         const parsedData = JSON.parse(content);
 
-        // Send it back to frontend
-        res.json(parsedData); // structure is { suggestions: [...] }
+        res.json(parsedData); 
 
     } catch (err) {
         console.error("OpenAI Error:", err);
         
-        // If OpenAI errors (e.g., Quota exceeded), send a readable error
         res.status(500).json({ 
             error: 'Failed to get suggestions', 
             details: err.message 

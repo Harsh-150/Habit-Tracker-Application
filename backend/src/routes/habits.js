@@ -16,11 +16,10 @@ router.get('/', async (req, res) => {
     try {
         const habits = await Habit.find({ user: req.userId });
         
-        // Check if it's a new day for the habits to reset the UI progress
         const today = new Date().toISOString().split('T')[0];
         const updatedHabits = habits.map(h => {
             if (h.lastCompleted !== today) {
-                h.dailyProgress = 0; // Reset progress for display if it's a new day
+                h.dailyProgress = 0;
             }
             return h;
         });
@@ -33,7 +32,7 @@ router.get('/', async (req, res) => {
 
 // 2. POST (accepts 'target')
 router.post('/', async (req, res) => {
-    const { name, target } = req.body; // target from frontend
+    const { name, target } = req.body; 
     if (!name) return res.status(400).json({ error: 'Name is required' });
 
     try {
@@ -61,25 +60,18 @@ router.patch('/:id/complete', async (req, res) => {
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-        // If this is the FIRST time touching this habit today
         if (habit.lastCompleted !== today) {
-            habit.dailyProgress = 0; // Reset counter
-            habit.lastCompleted = today; // Mark as visited today
+            habit.dailyProgress = 0; 
+            habit.lastCompleted = today; 
         }
 
-        // Prevent clicking if already hit target (optional, but good UI)
         if (habit.dailyProgress >= habit.target) {
              return res.json({ message: 'Target already met!', habit });
         }
 
-        // Increment Progress
         habit.dailyProgress += 1;
 
-        // STREAK LOGIC: Only increase streak if we JUST hit the target
         if (habit.dailyProgress === habit.target) {
-            // Check if we did it yesterday (streak continues)
-            // Note: This is simplified. Real streak logic is complex.
-            // For now, we just add to streak if target is met.
             habit.streak += 1; 
         }
 

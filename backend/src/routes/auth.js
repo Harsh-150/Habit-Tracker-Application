@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User'); 
 
-// 1. SIGNUP ROUTE
+// 1. Signup
 router.post('/signup', async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -26,7 +26,7 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// 2. LOGIN ROUTE
+// 2. Login
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -40,12 +40,10 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Invalid credentials (User not found)' });
         }
 
-        // Check password
         if (user.password !== password) {
             return res.status(400).json({ error: 'Invalid credentials (Wrong password)' });
         }
 
-        // Success
         res.json({ 
             message: 'Login successful!', 
             user: { id: user._id, username: user.username } 
