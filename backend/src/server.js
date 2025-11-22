@@ -16,6 +16,7 @@ app.use(bodyParser.json());
 // 3. Routes
 app.use('/api/auth', require('./routes/auth'));   // For Login/Signup
 app.use('/api/habits', require('./routes/habits')); // For Habits (MongoDB)
+app.use('/api/ai', require('./routes/ai')); // For habit Suggestions
 
 app.listen(PORT, () => {
     console.log(`Backend running on http://localhost:${PORT}`);
