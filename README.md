@@ -20,3 +20,26 @@ A full-stack Habit Tracking application built with the **MERN Stack** logic (Mon
 - **AI API:** Perplexity AI (OpenAI Compatible) / Google Gemini (Optional)
 - **Tools:** Postman, VS Code, Git
 
+
+## 🚀 How It Works
+
+### Step 1: Sign Up Page
+![Sign Up Page](./assets/Step1.png)
+
+### Step 2: User Enters Details
+![Enter details](./assets/Step2.png)
+
+### Step 3: Login
+![Login Successful](./assets/Step3.png)
+
+### Step 4: Home Page
+![Home Page](./assets/Step4.png)
+
+### Step 5: Enter Habit and Target
+![frequency and target](./assets/Step5.png)
+
+### Step 6: Habit Added
+![habit added](./assets/Step6.png)
+
+### Step 7: Delete Habit
+![delete habit](./assets/Step7.png)
