@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; background-color: #f4f4f9; color: #333; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* New Inputs */
+        input[type="text"] { flex-grow: 2; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
+        input[type="number"] { width: 60px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        button.add-btn { padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        .habit-card { background: white; border: 1px solid #eee; padding: 20px; margin-bottom: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-done { background-color: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-del { background-color: #ffebee; border: 1px solid #ffcdd2; color: #c62828; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
+        
+        /* Progress Style */
+        .progress-text { font-size: 0.9rem; color: #666; margin-top: 5px; display: block;}
+        .completed-state { background-color: #f0fff4; border-color: #b2f5ea; }
+    </style>
+</head>
+<body>
+
+    <div class="header-row">
+        <h1>Habit Tracker</h1>
+        <div style="text-align: right;">
+            <small id="welcomeMsg">Hello!</small>
+            <button onclick="logout()" style="margin-left:10px;">Logout</button>
+        </div>
+    </div>
+    
+    <div class="input-group">
+        <input type="text" id="habitName" placeholder="Habit (e.g., Drink Water)">
+        <input type="number" id="habitTarget" placeholder="#" value="1" min="1">
+        <button class="add-btn" onclick="addHabit()">Add</button>
+    </div>
+
+    <div id="habitList"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/habits';
+        
+        const userString = localStorage.getItem('user');
+        if (!userString) window.location.href = 'login.html';
+        const user = JSON.parse(userString);
+        document.getElementById('welcomeMsg').innerText = `Hi, ${user.username}`;
+
+        const getHeaders = () => ({ 'Content-Type': 'application/json', 'user-id': user.id });
+
+        async function fetchHabits() {
+            try {
+                const res = await fetch(API_URL, { headers: getHeaders() });
+                if (res.status === 401) logout();
+                const habits = await res.json();
+                render(habits);
+            } catch (err) { console.error(err); }
+        }
+
+        async function addHabit() {
+            const nameInput = document.getElementById('habitName');
+            const targetInput = document.getElementById('habitTarget');
+            
+            const name = nameInput.value;
+            const target = targetInput.value || 1;
+
+            if(!name) return;
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ name, target })
+            });
+            nameInput.value = '';
+            targetInput.value = '1'; // Reset to 1
+            fetchHabits();
+        }
+
+        async function markComplete(id) {
+            await fetch(`${API_URL}/${id}/complete`, { method: 'PATCH', headers: getHeaders() });
+            fetchHabits();
+        }
+
+        async function deleteHabit(id) {
+            if(!confirm('Delete?')) return;
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE', headers: getHeaders() });
+            fetchHabits();
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        function render(habits) {
+            const list = document.getElementById('habitList');
+            list.innerHTML = habits.map(habit => {
+                // Check if completed
+                const isDone = habit.dailyProgress >= habit.target;
+                const cardClass = isDone ? 'habit-card completed-state' : 'habit-card';
+                const btnText = isDone ? '✔ Completed' : '+ 1';
+                
+                return `
+                <div class="${cardClass}">
+                    <div class="habit-info">
+                        <h3>${habit.name}</h3>
+                        <span class="progress-text">
+                            Today: <strong>${habit.dailyProgress} / ${habit.target}</strong> 
+                            &nbsp; | &nbsp; Streak: 🔥 ${habit.streak}
+                        </span>
+                    </div>
+                    <div>
+                        <button class="btn-done" onclick="markComplete('${habit._id}')" ${isDone ? 'disabled' : ''} style="${isDone ? 'opacity:0.6' : ''}">
+                            ${btnText}
+                        </button>
+                        <button class="btn-del" onclick="deleteHabit('${habit._id}')">X</button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        fetchHabits();
+    </script>
+</body>
+</html>
