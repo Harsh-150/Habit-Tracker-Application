@@ -19,3 +19,4 @@ A full-stack Habit Tracking application built with the **MERN Stack** logic (Mon
 - **Frontend:** HTML5, CSS3, Vanilla JavaScript (Fetch API)
 - **AI API:** Perplexity AI (OpenAI Compatible) / Google Gemini (Optional)
 - **Tools:** Postman, VS Code, Git
+
