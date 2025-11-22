@@ -7,21 +7,28 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; background-color: #f4f4f9; color: #333; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        /* AI Section Styles */
+        .ai-container { background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bbdefb; }
+        .ai-input-row { display: flex; gap: 10px; }
+        .ai-suggestions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .suggestion-chip { background: white; border: 1px solid #2196f3; color: #1976d2; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .suggestion-chip:hover { background: #bbdefb; }
+        
         .input-group { display: flex; gap: 10px; margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        /* New Inputs */
         input[type="text"] { flex-grow: 2; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
         input[type="number"] { width: 60px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
         
         button.add-btn { padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        
+        button.ai-btn { padding: 12px 20px; background-color: #673ab7; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button.ai-btn:hover { background-color: #512da8; }
+
         .habit-card { background: white; border: 1px solid #eee; padding: 20px; margin-bottom: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .btn-done { background-color: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-        .btn-del { background-color: #ffebee; border: 1px solid #ffcdd2; color: #c62828; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
-        
-        /* Progress Style */
         .progress-text { font-size: 0.9rem; color: #666; margin-top: 5px; display: block;}
         .completed-state { background-color: #f0fff4; border-color: #b2f5ea; }
+        .btn-done { background-color: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-del { background-color: #ffebee; border: 1px solid #ffcdd2; color: #c62828; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -30,12 +37,22 @@
         <h1>Habit Tracker</h1>
         <div style="text-align: right;">
             <small id="welcomeMsg">Hello!</small>
-            <button onclick="logout()" style="margin-left:10px;">Logout</button>
+            <button onclick="logout()" style="margin-left:10px; padding: 5px 10px; cursor:pointer;">Logout</button>
         </div>
+    </div>
+
+    <div class="ai-container">
+        <h3>Enter your goals</h3>
+        <div class="ai-input-row">
+            <input type="text" id="userGoal" placeholder="What is your goal? (e.g., Learn French)">
+            <button class="ai-btn" onclick="getSuggestions()">Suggest</button>
+        </div>
+        <div id="suggestionList" class="ai-suggestions"></div>
+        <small style="color: #666; margin-top:5px; display:block;" id="aiLoading"></small>
     </div>
     
     <div class="input-group">
-        <input type="text" id="habitName" placeholder="Habit (e.g., Drink Water)">
+        <input type="text" id="habitName" placeholder="Habit Name">
         <input type="number" id="habitTarget" placeholder="#" value="1" min="1">
         <button class="add-btn" onclick="addHabit()">Add</button>
     </div>
@@ -43,7 +60,7 @@
     <div id="habitList"></div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api/habits';
+        const API_URL = 'http://localhost:3000/api';
         
         const userString = localStorage.getItem('user');
         if (!userString) window.location.href = 'login.html';
@@ -52,9 +69,47 @@
 
         const getHeaders = () => ({ 'Content-Type': 'application/json', 'user-id': user.id });
 
+        // --- AI LOGIC ---
+        async function getSuggestions() {
+            const goal = document.getElementById('userGoal').value;
+            if(!goal) return alert("Please enter a goal first");
+
+            const loading = document.getElementById('aiLoading');
+            const list = document.getElementById('suggestionList');
+            
+            loading.innerText = "Thinking... 🤖";
+            list.innerHTML = "";
+
+            try {
+                const res = await fetch(`${API_URL}/ai/suggest-habits`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ goal })
+                });
+                const data = await res.json();
+                
+                loading.innerText = "";
+                
+                if(data.suggestions) {
+                    list.innerHTML = data.suggestions.map(s => 
+                        `<div class="suggestion-chip" onclick="fillHabit('${s}')">+ ${s}</div>`
+                    ).join('');
+                }
+            } catch (err) {
+                console.error(err);
+                loading.innerText = "Error getting suggestions.";
+            }
+        }
+
+        function fillHabit(text) {
+            document.getElementById('habitName').value = text;
+            // Optional: Auto-scroll to the add button or highlight it
+        }
+
+        // --- EXISTING CRUD LOGIC ---
         async function fetchHabits() {
             try {
-                const res = await fetch(API_URL, { headers: getHeaders() });
+                const res = await fetch(`${API_URL}/habits`, { headers: getHeaders() });
                 if (res.status === 401) logout();
                 const habits = await res.json();
                 render(habits);
@@ -64,30 +119,29 @@
         async function addHabit() {
             const nameInput = document.getElementById('habitName');
             const targetInput = document.getElementById('habitTarget');
-            
             const name = nameInput.value;
             const target = targetInput.value || 1;
 
             if(!name) return;
 
-            await fetch(API_URL, {
+            await fetch(`${API_URL}/habits`, {
                 method: 'POST',
                 headers: getHeaders(),
                 body: JSON.stringify({ name, target })
             });
             nameInput.value = '';
-            targetInput.value = '1'; // Reset to 1
+            targetInput.value = '1';
             fetchHabits();
         }
 
         async function markComplete(id) {
-            await fetch(`${API_URL}/${id}/complete`, { method: 'PATCH', headers: getHeaders() });
+            await fetch(`${API_URL}/habits/${id}/complete`, { method: 'PATCH', headers: getHeaders() });
             fetchHabits();
         }
 
         async function deleteHabit(id) {
             if(!confirm('Delete?')) return;
-            await fetch(`${API_URL}/${id}`, { method: 'DELETE', headers: getHeaders() });
+            await fetch(`${API_URL}/habits/${id}`, { method: 'DELETE', headers: getHeaders() });
             fetchHabits();
         }
 
@@ -99,11 +153,9 @@
         function render(habits) {
             const list = document.getElementById('habitList');
             list.innerHTML = habits.map(habit => {
-                // Check if completed
                 const isDone = habit.dailyProgress >= habit.target;
                 const cardClass = isDone ? 'habit-card completed-state' : 'habit-card';
                 const btnText = isDone ? '✔ Completed' : '+ 1';
-                
                 return `
                 <div class="${cardClass}">
                     <div class="habit-info">
