@@ -43,3 +43,6 @@ A full-stack Habit Tracking application built with the **MERN Stack** logic (Mon
 
 ### Step 7: Delete Habit
 ![delete habit](./assets/Step7.png)
+
+### Step 8: AI Suggestions for targeted goals
+![Ai Suggestions](./assets/Step8.png)
